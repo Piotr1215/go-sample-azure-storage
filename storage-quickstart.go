@@ -62,7 +62,8 @@ func main() {
 	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
 
 	// Create a random string for the quick start container
-	containerName := fmt.Sprintf("quickstart-%s", randomString())
+	// containerName := fmt.Sprintf("quickstart-%s", randomString())
+	containerName := "test-container"
 
 	// From the Azure portal, get your storage account blob service URL endpoint.
 	URL, _ := url.Parse(
