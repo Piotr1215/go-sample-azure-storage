@@ -1,13 +1,13 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -46,6 +46,17 @@ func handleErrors(err error) {
 }
 
 func main() {
+
+	http.HandleFunc("/", writeblob)
+	fmt.Println("listening on port 8080...")
+	fmt.Println("go to: http://localhost:8080")
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func writeblob(res http.ResponseWriter, req *http.Request) {
 	fmt.Printf("Azure Blob storage quick start sample\n")
 
 	// From the Azure portal, get your storage account name and key and set environment variables.
@@ -118,29 +129,29 @@ func main() {
 
 		// Process the blobs returned in this result segment (if the segment is empty, the loop body won't execute)
 		for _, blobInfo := range listBlob.Segment.BlobItems {
+			// create a list with blob names
 			fmt.Print("	Blob name: " + blobInfo.Name + "\n")
 		}
 	}
 
 	// Here's how to download the blob
-	downloadResponse, err := blobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+	// downloadResponse, err := blobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+
+	// DefaultEndpointsProtocol=https;AccountName=containerappstorage123;EndpointSuffix=core.windows.net;AccountKey=rMJ2B50ZXqGs33/PwM3mbT89ScMWywqIULNQbDiPjLHqVhH2Hv+93bcEHB7zKAjvMLqYS7DJXtoUjYxW5y/i+g==
 
 	// NOTE: automatically retries are performed if the connection fails
-	bodyStream := downloadResponse.Body(azblob.RetryReaderOptions{MaxRetryRequests: 20})
+	// bodyStream := downloadResponse.Body(azblob.RetryReaderOptions{MaxRetryRequests: 20})
 
 	// read the body into a buffer
-	downloadedData := bytes.Buffer{}
-	_, err = downloadedData.ReadFrom(bodyStream)
+	//downloadedData := bytes.Buffer{}
+	//_, err = downloadedData.ReadFrom(bodyStream)
 	handleErrors(err)
 
-	// The downloaded blob data is in downloadData's buffer. :Let's print it
-	fmt.Printf("Downloaded the blob: " + downloadedData.String())
-
-	// Cleaning up the quick start by deleting the container and the file created locally
-	fmt.Printf("Press enter key to delete the sample files, example container, and exit the application.\n")
-	bufio.NewReader(os.Stdin).ReadBytes('\n')
-	fmt.Printf("Cleaning up.\n")
-	containerURL.Delete(ctx, azblob.ContainerAccessConditions{})
 	file.Close()
 	os.Remove(fileName)
+
+	res.WriteHeader(http.StatusOK)
+	res.Header().Set("Content-Type", "application/json")
+	io.WriteString(res, "Blobs created successfully, check the Azure portal")
 }
+
